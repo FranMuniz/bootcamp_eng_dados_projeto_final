@@ -8,7 +8,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
 
 ---
 
-## 🎯 Objetivos Técnicos
+### 🎯 Objetivos Técnicos
 
 1. **Ingestão de Dados com Kafka e PostgreSQL**  
    Implementação de pipelines de ingestão bruta usando Apache Kafka, com dados inicialmente armazenados em PostgreSQL. Serviços configurados via Docker Compose para garantir reprodutibilidade e isolamento.
@@ -44,7 +44,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
 
 ---
 
-## 📸 Evidências do Projeto (Entregáveis)
+### 📸 Evidências do Projeto (Entregáveis)
 
 - Tabelas carregadas no PostgreSQL (Bronze, Silver, Gold)  
 - Códigos Spark SQL utilizados (prints e logs)  
@@ -80,7 +80,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
 
 ---
 
-## 🚀 Como Rodar
+### 🚀 Como Rodar
 
 1. **Iniciar os conectores JDBC Source**
 
