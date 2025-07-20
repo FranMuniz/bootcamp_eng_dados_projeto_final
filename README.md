@@ -54,7 +54,3 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
 
 ---
 
-### 👩‍💻 Autor
-
-Este projeto foi desenvolvido por **Francieli Muniz** para fins **educacionais e de aprendizado prático** em Engenharia de Dados.
-
