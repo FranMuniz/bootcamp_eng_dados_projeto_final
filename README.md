@@ -2,18 +2,71 @@
 
 ## 📘 Descrição
 
-Este projeto implementa um pipeline de streaming e persistência de dados que conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e `dadostesouropre_gold`) a **tópicos Kafka**, e posteriormente envia esses dados para a **AWS S3** em formato JSON.  
+Este projeto desenvolve uma solução completa de Engenharia de Dados utilizando um pipeline ETL estruturado em três camadas (Bronze, Silver e Gold), com orquestração opcional via Airflow. A arquitetura integra tecnologias amplamente utilizadas no mercado, como Apache Kafka, Apache Spark, PostgreSQL, Amazon S3 e Kafka Connect, todos executados em ambiente Dockerizado.
 
-O objetivo é garantir a **sincronização contínua** dos dados processados (camada Gold) com sistemas downstream, como data lakes ou ferramentas de análise.
+O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e `dadostesouropre_gold`) a **tópicos Kafka**, que alimentam arquivos JSON organizados no **AWS S3**, garantindo a **sincronização contínua** dos dados para consumo downstream.
 
 ---
 
-## 🧱 Arquitetura do Pipeline
+## 🎯 Objetivos Técnicos
 
-1. **📡 Fonte de Dados:** PostgreSQL (camada Gold: IPCA e Prefixado)
-2. **🔄 Kafka Connect - JDBC Source:** extrai dados do PostgreSQL e publica nos tópicos Kafka
-3. **🧩 Kafka Broker:** armazena os tópicos atualizados
-4. **🌩 Kafka Connect - S3 Sink:** consome os tópicos e escreve arquivos `.json` em um bucket AWS S3
+1. **Ingestão de Dados com Kafka e PostgreSQL**  
+   Implementação de pipelines de ingestão bruta usando Apache Kafka, com dados inicialmente armazenados em PostgreSQL. Serviços configurados via Docker Compose para garantir reprodutibilidade e isolamento.
+
+2. **Criação de Pipelines ETL com Spark SQL**  
+   Processamento dos dados em camadas:  
+   - **Bronze:** Ingestão bruta de arquivos JSON com sujeiras e duplicações.  
+   - **Silver:** Limpeza, tratamento de dados ausentes e padronização.  
+   - **Gold:** Geração de métricas e dados prontos para análise.
+
+3. **Integração com Data Lake no S3 via Kafka Connect**  
+   Configuração de Kafka Connect Sink para envio dos dados Gold ao Data Lake na Amazon S3, com particionamento e organização adequados.
+
+4. **Orquestração com Apache Airflow (opcional)**  
+   Orquestração dos pipelines Bronze → Silver → Gold para garantir execução ordenada e monitorada.
+
+---
+
+## 🧱 Estrutura dos Pipelines
+
+### 🥉 Pipeline Bronze - Ingestão Bruta
+- **Fonte:** Arquivo JSON com inconsistências  
+- **Processamento:** Leitura via Spark e validação do schema  
+- **Destino:** Tabela Bronze no PostgreSQL ou armazenamento em Parquet/Delta
+
+### 🥈 Pipeline Silver - Limpeza e Transformação
+- **Fonte:** Tabela Bronze  
+- **Processamento:**  
+  - Remoção de duplicatas  
+  - Tratamento de nulos e registros inválidos  
+  - Padronização de formatos (strings, datas, etc.)  
+- **Destino:** Tabela Silver no PostgreSQL
+
+### 🥇 Pipeline Gold - Agregação e Enriquecimento
+- **Fonte:** Tabela Silver  
+- **Processamento:**  
+  - Cálculo de métricas agregadas (ex.: totais, médias)  
+  - Dados prontos para análise  
+- **Destino:** Tabela Gold no PostgreSQL
+
+---
+
+## 🏗️ Arquitetura do Pipeline
+
+1. **📡 Fonte de Dados:** PostgreSQL (camada Gold: IPCA e Prefixado)  
+2. **🔄 Kafka Connect - JDBC Source:** extrai dados do PostgreSQL e publica nos tópicos Kafka  
+3. **🧩 Kafka Broker:** armazena os tópicos atualizados  
+4. **🌩 Kafka Connect - S3 Sink:** consome tópicos e grava arquivos JSON no bucket AWS S3  
+
+---
+
+## 📸 Evidências do Projeto (Entregáveis)
+
+- Tabelas carregadas no PostgreSQL (Bronze, Silver, Gold)  
+- Códigos Spark SQL utilizados (prints e logs)  
+- Configurações dos tópicos Kafka e Connectors  
+- Logs e screenshots da execução dos pipelines  
+- Dados organizados e particionados no Amazon S3  
 
 ---
 
@@ -21,25 +74,25 @@ O objetivo é garantir a **sincronização contínua** dos dados processados (ca
 
 ### 🔌 JDBC Source Connector
 
-- Modo de operação: `bulk` (leitura completa das tabelas)
-- Principais configs:
-  - `connector.class`: `io.confluent.connect.jdbc.JdbcSourceConnector`
-  - `connection.url`: URL de conexão JDBC para PostgreSQL
-  - `table.whitelist`: `dadostesouroipca_gold`, `dadostesouropre_gold`
-  - `topic.prefix`: `postgres-`
-  - `mode`: `bulk`
-  - `tasks.max`: `1`
+- Modo de operação: `bulk` (leitura completa das tabelas)  
+- Principais configurações:  
+  - `connector.class`: `io.confluent.connect.jdbc.JdbcSourceConnector`  
+  - `connection.url`: JDBC URL para PostgreSQL  
+  - `table.whitelist`: `dadostesouroipca_gold`, `dadostesouropre_gold`  
+  - `topic.prefix`: `postgres-`  
+  - `mode`: `bulk`  
+  - `tasks.max`: `1`  
 
 ### 🪣 S3 Sink Connector
 
-- Grava os dados dos tópicos Kafka em arquivos JSON no S3
-- Principais configs:
-  - `connector.class`: `io.confluent.connect.s3.S3SinkConnector`
-  - `topics`: `postgres-dadostesouroipca_gold`, `postgres-dadostesouropre_gold`
-  - `s3.bucket.name`: nome do bucket na AWS
-  - `format.class`: `io.confluent.connect.s3.format.json.JsonFormat`
-  - `flush.size`: define a frequência de gravação
-  - Credenciais AWS via variáveis de ambiente
+- Grava dados dos tópicos Kafka em arquivos JSON no S3  
+- Principais configurações:  
+  - `connector.class`: `io.confluent.connect.s3.S3SinkConnector`  
+  - `topics`: `postgres-dadostesouroipca_gold`, `postgres-dadostesouropre_gold`  
+  - `s3.bucket.name`: nome do bucket AWS  
+  - `format.class`: `io.confluent.connect.s3.format.json.JsonFormat`  
+  - `flush.size`: frequência de gravação  
+  - Credenciais AWS via variáveis de ambiente  
 
 ---
 
@@ -87,10 +140,11 @@ docker exec -it broker kafka-console-consumer \
   --from-beginning --max-messages 5
 ```
 
-## 📝 Observações
+---
 
-O pipeline está desenhado para rodar continuamente, mantendo os dados sincronizados entre **PostgreSQL**, **Kafka** e **S3**.
+### 👩‍💻 Autor
 
-As configurações podem ser facilmente adaptadas para modos como `timestamp+incrementing` ou `incrementing`, caso você precise de captura de alterações (CDC).
+Este projeto foi desenvolvido por **Francieli Muniz** para fins **educacionais e de aprendizado prático** em engenharia de dados.
 
-Todos os conectores estão em formato `.config` (JSON) e versionados no repositório.
+Caso tenha dúvidas, sugestões ou queira colaborar, fique à vontade para entrar em contato!
+
