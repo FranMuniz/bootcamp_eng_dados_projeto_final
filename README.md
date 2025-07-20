@@ -1,10 +1,12 @@
-# 🌀 Pipeline Kafka Connect: PostgreSQL (Gold) → Kafka → AWS S3
+# Pipeline Kafka Connect: PostgreSQL (Gold) → Kafka → AWS S3
 
 ## 📘 Descrição
 
-Este projeto desenvolve uma solução completa de Engenharia de Dados utilizando um pipeline ETL estruturado em três camadas (Bronze, Silver e Gold), com orquestração opcional via Airflow. A arquitetura integra tecnologias amplamente utilizadas no mercado, como Apache Kafka, Apache Spark, PostgreSQL, Amazon S3 e Kafka Connect, todos executados em ambiente Dockerizado.
+Este projeto implementa uma solução completa de Engenharia de Dados por meio de um pipeline ETL estruturado em três camadas: **Bronze**, **Silver** e **Gold**. A orquestração é realizada com o **Apache Airflow**, agendando execuções a cada **10 minutos**, o que caracteriza um modelo de processamento do tipo **micro-batch**. Esse formato garante um bom equilíbrio entre latência e eficiência, permitindo atualizações frequentes e consistentes no Data Lake.
 
-O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e `dadostesouropre_gold`) a **tópicos Kafka**, que alimentam arquivos JSON organizados no **AWS S3**, garantindo a **sincronização contínua** dos dados para consumo downstream.
+A arquitetura do projeto integra tecnologias amplamente utilizadas no mercado, como **Apache Kafka**, **Apache Spark**, **PostgreSQL**, **Amazon S3** e **Kafka Connect**, todas operando em um ambiente totalmente **dockerizado**.
+
+O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e `dadostesouropre_gold`) a **tópicos Kafka**, que por sua vez alimentam arquivos no formato **JSON** organizados no **AWS S3**, garantindo a **sincronização contínua dos dados** para consumo em sistemas downstream.
 
 ---
 
@@ -14,49 +16,33 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
    Implementação de pipelines de ingestão bruta usando Apache Kafka, com dados inicialmente armazenados em PostgreSQL. Serviços configurados via Docker Compose para garantir reprodutibilidade e isolamento.
 
 2. **Criação de Pipelines ETL com Spark SQL**  
-   Processamento dos dados em camadas:  
-   - **Bronze:** Ingestão bruta de arquivos JSON com sujeiras e duplicações.  
-   - **Silver:** Limpeza, tratamento de dados ausentes e padronização.  
-   - **Gold:** Geração de métricas e dados prontos para análise.
+   Estrutura de processamento em camadas para limpeza, transformação e enriquecimento dos dados:
+
+   - 🥉 **Pipeline Bronze - Ingestão Bruta**  
+     - **Fonte:** Arquivos JSON com inconsistências e possíveis duplicações  
+     - **Processamento:** Leitura via Spark e validação do schema  
+     - **Destino:** Tabela Bronze no PostgreSQL ou armazenamento em Parquet/Delta
+
+   - 🥈 **Pipeline Silver - Limpeza e Transformação**  
+     - **Fonte:** Tabela Bronze  
+     - **Processamento:**  
+       - Remoção de duplicatas  
+       - Tratamento de nulos e registros inválidos  
+       - Padronização de formatos (strings, datas, etc.)  
+     - **Destino:** Tabela Silver no PostgreSQL
+
+   - 🥇 **Pipeline Gold - Agregação e Enriquecimento**  
+     - **Fonte:** Tabela Silver  
+     - **Processamento:**  
+       - Cálculo de métricas agregadas (ex.: totais, médias)  
+       - Preparação dos dados para análise  
+     - **Destino:** Tabela Gold no PostgreSQL
 
 3. **Integração com Data Lake no S3 via Kafka Connect**  
    Configuração de Kafka Connect Sink para envio dos dados Gold ao Data Lake na Amazon S3, com particionamento e organização adequados.
 
 4. **Orquestração com Apache Airflow (opcional)**  
    Orquestração dos pipelines Bronze → Silver → Gold para garantir execução ordenada e monitorada.
-
----
-
-## 🧱 Estrutura dos Pipelines
-
-### 🥉 Pipeline Bronze - Ingestão Bruta
-- **Fonte:** Arquivo JSON com inconsistências  
-- **Processamento:** Leitura via Spark e validação do schema  
-- **Destino:** Tabela Bronze no PostgreSQL ou armazenamento em Parquet/Delta
-
-### 🥈 Pipeline Silver - Limpeza e Transformação
-- **Fonte:** Tabela Bronze  
-- **Processamento:**  
-  - Remoção de duplicatas  
-  - Tratamento de nulos e registros inválidos  
-  - Padronização de formatos (strings, datas, etc.)  
-- **Destino:** Tabela Silver no PostgreSQL
-
-### 🥇 Pipeline Gold - Agregação e Enriquecimento
-- **Fonte:** Tabela Silver  
-- **Processamento:**  
-  - Cálculo de métricas agregadas (ex.: totais, médias)  
-  - Dados prontos para análise  
-- **Destino:** Tabela Gold no PostgreSQL
-
----
-
-## 🏗️ Arquitetura do Pipeline
-
-1. **📡 Fonte de Dados:** PostgreSQL (camada Gold: IPCA e Prefixado)  
-2. **🔄 Kafka Connect - JDBC Source:** extrai dados do PostgreSQL e publica nos tópicos Kafka  
-3. **🧩 Kafka Broker:** armazena os tópicos atualizados  
-4. **🌩 Kafka Connect - S3 Sink:** consome tópicos e grava arquivos JSON no bucket AWS S3  
 
 ---
 
