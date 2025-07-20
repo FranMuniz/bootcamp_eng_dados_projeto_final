@@ -1,7 +1,5 @@
 # Pipeline Kafka Connect: PostgreSQL (Gold) → Kafka → AWS S3
 
-## 📘 Descrição
-
 Este projeto implementa uma solução completa de Engenharia de Dados por meio de um pipeline ETL estruturado em três camadas: **Bronze**, **Silver** e **Gold**. A orquestração é realizada com o **Apache Airflow**, agendando execuções a cada **10 minutos**, o que caracteriza um modelo de processamento do tipo **micro-batch**. Esse formato garante um bom equilíbrio entre latência e eficiência, permitindo atualizações frequentes e consistentes no Data Lake.
 
 A arquitetura do projeto integra tecnologias amplamente utilizadas no mercado, como **Apache Kafka**, **Apache Spark**, **PostgreSQL**, **Amazon S3** e **Kafka Connect**, todas operando em um ambiente totalmente **dockerizado**.
