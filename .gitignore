@@ -1,0 +1,49 @@
+# Python cache e arquivos compilados
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Arquivos de log
+logs/
+*.log
+
+# Diretórios do Airflow
+airflow.db
+airflow_data/
+airflow.cfg
+airflow.db_initialized
+
+# Docker
+*.env
+*.pid
+docker-compose.override.yml
+.env_kafka_connect
+
+# Docker volumes 
+volumes/
+
+# VSCode
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+
+# Spark jars
+jars/
+
+# Arquivos temporários do sistema 
+*.swp
+*.swo
+*~
+
+# Arquivos de ambiente local
+.env
+.env_kafka_connect
+
+# Venv
+.venv
