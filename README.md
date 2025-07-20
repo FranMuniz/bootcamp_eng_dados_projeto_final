@@ -1,70 +1,96 @@
-# Pipeline Kafka Connect - Integração PostgreSQL Gold → Kafka → AWS S3
+# 🌀 Pipeline Kafka Connect: PostgreSQL (Gold) → Kafka → AWS S3
 
-## Descrição
+## 📘 Descrição
 
-Este projeto implementa um pipeline de ingestão e persistência de dados das tabelas gold (`dadostesouroipca_gold` e `dadostesouropre_gold`) do banco de dados PostgreSQL para tópicos Kafka, e de Kafka para arquivos JSON armazenados em um bucket AWS S3. O objetivo é manter os dados gold sincronizados e disponíveis para consumo downstream.
+Este projeto implementa um pipeline de streaming e persistência de dados que conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e `dadostesouropre_gold`) a **tópicos Kafka**, e posteriormente envia esses dados para a **AWS S3** em formato JSON.  
 
----
-
-## Arquitetura
-
-1. **Fonte de Dados:** PostgreSQL (tabelas gold IPCA e PRE)  
-2. **Kafka Connect Source:** Conectores JDBC para ler dados das tabelas e publicar em tópicos Kafka  
-3. **Kafka Broker:** Armazena os tópicos com os dados atualizados  
-4. **Kafka Connect Sink:** Conectores S3 Sink para gravar dados do Kafka em arquivos JSON no bucket S3  
+O objetivo é garantir a **sincronização contínua** dos dados processados (camada Gold) com sistemas downstream, como data lakes ou ferramentas de análise.
 
 ---
 
-## Configuração dos Conectores
+## 🧱 Arquitetura do Pipeline
 
-### JDBC Source Connectors
+1. **📡 Fonte de Dados:** PostgreSQL (camada Gold: IPCA e Prefixado)
+2. **🔄 Kafka Connect - JDBC Source:** extrai dados do PostgreSQL e publica nos tópicos Kafka
+3. **🧩 Kafka Broker:** armazena os tópicos atualizados
+4. **🌩 Kafka Connect - S3 Sink:** consome os tópicos e escreve arquivos `.json` em um bucket AWS S3
 
-- Conectores configurados para modo `bulk` para leitura completa das tabelas gold.
-- Configurações importantes:
+---
+
+## ⚙️ Configuração dos Conectores
+
+### 🔌 JDBC Source Connector
+
+- Modo de operação: `bulk` (leitura completa das tabelas)
+- Principais configs:
   - `connector.class`: `io.confluent.connect.jdbc.JdbcSourceConnector`
-  - `connection.url`: JDBC URL para PostgreSQL
-  - `table.whitelist`: nome da tabela gold (`dadostesouroipca_gold` ou `dadostesouropre_gold`)
-  - `topic.prefix`: prefixo usado para o nome do tópico Kafka (`postgres-`)
+  - `connection.url`: URL de conexão JDBC para PostgreSQL
+  - `table.whitelist`: `dadostesouroipca_gold`, `dadostesouropre_gold`
+  - `topic.prefix`: `postgres-`
   - `mode`: `bulk`
-  - `tasks.max`: 1
+  - `tasks.max`: `1`
 
-### S3 Sink Connectors
+### 🪣 S3 Sink Connector
 
-- Conectores configurados para gravar dados dos tópicos Kafka em arquivos JSON no bucket AWS S3.
-- Configurações importantes:
+- Grava os dados dos tópicos Kafka em arquivos JSON no S3
+- Principais configs:
   - `connector.class`: `io.confluent.connect.s3.S3SinkConnector`
-  - `topics`: tópicos Kafka gerados pelo JDBC Source (`postgres-dadostesouroipca_gold` e `postgres-dadostesouropre_gold`)
-  - `s3.bucket.name`: nome do bucket S3
+  - `topics`: `postgres-dadostesouroipca_gold`, `postgres-dadostesouropre_gold`
+  - `s3.bucket.name`: nome do bucket na AWS
   - `format.class`: `io.confluent.connect.s3.format.json.JsonFormat`
-  - Configuração AWS (Access Key e Secret Key)
-  - `flush.size`: controla a frequência de gravação no S3
+  - `flush.size`: define a frequência de gravação
+  - Credenciais AWS via variáveis de ambiente
 
 ---
 
-## Como Rodar
+## 🚀 Como Rodar
 
-1. **Iniciar os Conectores JDBC Source**
+1. **Iniciar os conectores JDBC Source**
 
 ```bash
-curl -X POST -H "Content-Type: application/json" --data @connect_jdbc_postgres_ipca_gold.config http://localhost:8083/connectors
-curl -X POST -H "Content-Type: application/json" --data @connect_jdbc_postgres_pre_gold.config http://localhost:8083/connectors
+curl -X POST -H "Content-Type: application/json" \
+  --data @connect_jdbc_postgres_ipca_gold.config \
+  http://localhost:8083/connectors
+
+curl -X POST -H "Content-Type: application/json" \
+  --data @connect_jdbc_postgres_pre_gold.config \
+  http://localhost:8083/connectors
 
 curl http://localhost:8083/connectors/postg-connector-ipca-gold/status
 curl http://localhost:8083/connectors/postg-connector-pre-gold/status
 
-curl -X POST -H "Content-Type: application/json" --data @connect_s3_sink_ipca_gold.config http://localhost:8083/connectors
-curl -X POST -H "Content-Type: application/json" --data @connect_s3_sink_pre_gold.config http://localhost:8083/connectors
+curl -X POST -H "Content-Type: application/json" \
+  --data @connect_s3_sink_ipca_gold.config \
+  http://localhost:8083/connectors
+
+curl -X POST -H "Content-Type: application/json" \
+  --data @connect_s3_sink_pre_gold.config \
+  http://localhost:8083/connectors
 
 curl http://localhost:8083/connectors/s3-sink-connector-ipca-gold/status
 curl http://localhost:8083/connectors/s3-sink-connector-pre-gold/status
+```
 
----
+## ✅ Validação
 
-## Como validar
+Para inspecionar os dados diretamente nos tópicos Kafka:
 
-docker exec -it broker kafka-console-consumer --bootstrap-server broker:9092 --topic postgres-dadostesouroipca_gold --from-beginning --max-messages 5
-docker exec -it broker kafka-console-consumer --bootstrap-server broker:9092 --topic postgres-dadostesouropre_gold --from-beginning --max-messages 5
+```bash
+docker exec -it broker kafka-console-consumer \
+  --bootstrap-server broker:9092 \
+  --topic postgres-dadostesouroipca_gold \
+  --from-beginning --max-messages 5
 
-## Obsrvações
+docker exec -it broker kafka-console-consumer \
+  --bootstrap-server broker:9092 \
+  --topic postgres-dadostesouropre_gold \
+  --from-beginning --max-messages 5
+```
 
-O pipeline está configurado para rodar continuamente e atualizar os dados no Kafka e no S3 automaticamente.
+## 📝 Observações
+
+O pipeline está desenhado para rodar continuamente, mantendo os dados sincronizados entre **PostgreSQL**, **Kafka** e **S3**.
+
+As configurações podem ser facilmente adaptadas para modos como `timestamp+incrementing` ou `incrementing`, caso você precise de captura de alterações (CDC).
+
+Todos os conectores estão em formato `.config` (JSON) e versionados no repositório.
