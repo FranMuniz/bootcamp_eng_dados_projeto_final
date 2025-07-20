@@ -17,7 +17,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
    Estrutura de processamento em camadas para limpeza, transformação e enriquecimento dos dados:
 
    - 🥉 **Pipeline Bronze - Ingestão Bruta**  
-     - **Fonte:** Arquivos JSON com inconsistências e possíveis duplicações  
+     - **Fonte:** Arquivo CSV obtido através da URL do Tesouro Direto
      - **Processamento:** Leitura via Spark e validação do schema  
      - **Destino:** Tabela Bronze no PostgreSQL
 
