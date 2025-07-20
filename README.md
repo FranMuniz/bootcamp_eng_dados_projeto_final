@@ -19,7 +19,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
    - 🥉 **Pipeline Bronze - Ingestão Bruta**  
      - **Fonte:** Arquivos JSON com inconsistências e possíveis duplicações  
      - **Processamento:** Leitura via Spark e validação do schema  
-     - **Destino:** Tabela Bronze no PostgreSQL ou armazenamento em Parquet/Delta
+     - **Destino:** Tabela Bronze no PostgreSQL
 
    - 🥈 **Pipeline Silver - Limpeza e Transformação**  
      - **Fonte:** Tabela Bronze  
@@ -39,7 +39,7 @@ O pipeline conecta as **tabelas Gold** do PostgreSQL (`dadostesouroipca_gold` e 
 3. **Integração com Data Lake no S3 via Kafka Connect**  
    Configuração de Kafka Connect Sink para envio dos dados Gold ao Data Lake na Amazon S3, com particionamento e organização adequados.
 
-4. **Orquestração com Apache Airflow (opcional)**  
+4. **Orquestração com Apache Airflow**  
    Orquestração dos pipelines Bronze → Silver → Gold para garantir execução ordenada e monitorada.
 
 ---
